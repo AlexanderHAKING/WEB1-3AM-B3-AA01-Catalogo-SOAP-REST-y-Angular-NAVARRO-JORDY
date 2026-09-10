@@ -24,7 +24,6 @@ soap 2/
 │   └── MovimientosRESTA/         Explicacion y separacion del REST
 ├── SQL/                          Script de base de datos
 ├── Postman/                      Colecciones para probar SOAP y REST
-├── Docs/                         Guia de apoyo del servicio SOAP
 ├── .gitignore
 └── README.md
 ```
@@ -37,10 +36,10 @@ La base de datos se llama:
 CatalogoSOAPDB
 ```
 
-Para crear las tablas y datos de prueba se ejecuta:
+Para crear las tablas y datos de prueba, primero se abre la carpeta del proyecto y luego se ejecuta el script:
 
 ```powershell
-sqlcmd -S "localhost\SQLEXPRESS" -E -i "C:\Users\USUARIO\source\repos\soap 2\SQL\script-catalogosoap.sql"
+sqlcmd -S "localhost\SQLEXPRESS" -E -i "SQL\script-catalogosoap.sql"
 ```
 
 Tablas principales:
@@ -54,7 +53,6 @@ Tablas principales:
 Desde la carpeta del proyecto:
 
 ```powershell
-cd "C:\Users\USUARIO\source\repos\soap 2"
 dotnet run --project ServicioSOAP\ProductosSOAP\CatalogoSuap.csproj
 ```
 
@@ -133,7 +131,7 @@ Postman\CatalogoREST-Movimientos.postman_collection.json
 Entrar a la carpeta Angular:
 
 ```powershell
-cd "C:\Users\USUARIO\source\repos\soap 2\FrontendAngular\ProductosSOAPA-app"
+cd FrontendAngular\ProductosSOAPA-app
 pnpm install
 pnpm exec ng serve --host localhost --port 4200
 ```
