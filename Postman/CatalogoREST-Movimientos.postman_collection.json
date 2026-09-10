@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Catalogo REST - Movimiento Inventario",
+    "description": "Coleccion para probar el servicio REST de Movimiento_Inventario.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Obtener movimientos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5232/api/movimientos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5232",
+          "path": ["api", "movimientos"]
+        }
+      }
+    },
+    {
+      "name": "2. Obtener movimiento por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5232/api/movimientos/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5232",
+          "path": ["api", "movimientos", "1"]
+        }
+      }
+    },
+    {
+      "name": "3. Guardar movimiento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idProducto\": 1,\n  \"tipoMovimiento\": \"Entrada\",\n  \"cantidad\": 5,\n  \"observacion\": \"Ingreso registrado desde Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5232/api/movimientos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5232",
+          "path": ["api", "movimientos"]
+        }
+      }
+    },
+    {
+      "name": "4. Actualizar movimiento",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idProducto\": 1,\n  \"tipoMovimiento\": \"Salida\",\n  \"cantidad\": 2,\n  \"observacion\": \"Salida actualizada desde Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5232/api/movimientos/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5232",
+          "path": ["api", "movimientos", "1"]
+        }
+      }
+    },
+    {
+      "name": "5. Borrar movimiento",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5232/api/movimientos/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5232",
+          "path": ["api", "movimientos", "1"]
+        }
+      }
+    }
+  ]
+}

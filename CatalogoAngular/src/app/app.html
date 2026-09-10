@@ -1,0 +1,313 @@
+<main class="shell">
+  <section class="topbar">
+    <div>
+      <p class="eyebrow">Tercero A Matutina</p>
+      <h1>Catalogo de productos</h1>
+      <p class="subtitle">Integracion de SOAP, REST y consulta externa para inventario.</p>
+      <div class="service-tags">
+        <span>SOAP: Categoria + Producto</span>
+        <span>REST: Movimiento_Inventario</span>
+        <span>API externa</span>
+      </div>
+    </div>
+    <div class="service-box">
+      <span>SOAP + REST</span>
+      <strong>localhost:5232</strong>
+      <small>Angular: localhost:4200</small>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <article>
+      <span>Productos</span>
+      <strong>{{ productos.length }}</strong>
+    </article>
+    <article>
+      <span>Activos</span>
+      <strong>{{ totalActivos }}</strong>
+    </article>
+    <article>
+      <span>Categorias</span>
+      <strong>{{ categorias.length }}</strong>
+    </article>
+    <article>
+      <span>Stock total</span>
+      <strong>{{ inventarioTotal }}</strong>
+    </article>
+    <article>
+      <span>Movimientos</span>
+      <strong>{{ movimientos.length }}</strong>
+    </article>
+  </section>
+
+  <section class="workspace">
+    <aside class="panel form-panel">
+      <div class="panel-title">
+        <div>
+          <h2>{{ editando ? 'Editar producto' : 'Nuevo producto' }}</h2>
+          <span>Datos enviados al servicio SOAP</span>
+        </div>
+        <button type="button" class="ghost" (click)="nuevoProducto()">Limpiar</button>
+      </div>
+
+      <form (ngSubmit)="guardar()" #productoForm="ngForm">
+        <label>
+          Nombre
+          <input type="text" name="nombre" [(ngModel)]="formulario.nombre" required />
+        </label>
+
+        <label>
+          Descripcion
+          <textarea name="descripcion" rows="3" [(ngModel)]="formulario.descripcion"></textarea>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Precio
+            <input type="number" name="precio" min="0" step="0.01" [(ngModel)]="formulario.precio" />
+          </label>
+          <label>
+            Stock
+            <input type="number" name="stock" min="0" step="1" [(ngModel)]="formulario.stock" />
+          </label>
+        </div>
+
+        <label>
+          Categoria
+          <select name="idCategoria" [(ngModel)]="formulario.idCategoria">
+            <option *ngFor="let categoria of categorias" [value]="categoria.idCategoria">
+              {{ categoria.nombre }}
+            </option>
+          </select>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" name="estado" [(ngModel)]="formulario.estado" />
+          Producto activo
+        </label>
+
+        <button type="submit" class="primary" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : (editando ? 'Guardar cambios' : 'Agregar producto') }}
+        </button>
+      </form>
+
+      <div class="notice success" *ngIf="mensaje">{{ mensaje }}</div>
+      <div class="notice error" *ngIf="error">{{ error }}</div>
+
+      <div class="movement-box">
+        <div class="panel-title">
+          <div>
+            <h2>{{ editandoMovimiento ? 'Editar movimiento' : 'Movimiento REST' }}</h2>
+            <span>Entradas y salidas del inventario</span>
+          </div>
+          <button type="button" class="ghost" (click)="nuevoMovimiento()">Nuevo</button>
+        </div>
+
+        <form (ngSubmit)="guardarMovimiento()" #movimientoFormRef="ngForm">
+          <label>
+            Producto
+            <select name="movimientoProducto" [(ngModel)]="movimientoForm.idProducto">
+              <option *ngFor="let producto of productos" [value]="producto.idProducto">
+                {{ producto.nombre }}
+              </option>
+            </select>
+          </label>
+
+          <div class="field-row">
+            <label>
+              Tipo
+              <select name="movimientoTipo" [(ngModel)]="movimientoForm.tipoMovimiento">
+                <option value="Entrada">Entrada</option>
+                <option value="Salida">Salida</option>
+              </select>
+            </label>
+
+            <label>
+              Cantidad
+              <input type="number" name="movimientoCantidad" min="1" step="1" [(ngModel)]="movimientoForm.cantidad" />
+            </label>
+          </div>
+
+          <label>
+            Observacion
+            <textarea name="movimientoObservacion" rows="2" [(ngModel)]="movimientoForm.observacion"></textarea>
+          </label>
+
+          <button type="submit" class="secondary">
+            {{ editandoMovimiento ? 'Actualizar movimiento' : 'Registrar movimiento' }}
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <section class="main-panel">
+      <div class="panel filters">
+        <label>
+          Categoria
+          <select [(ngModel)]="filtroCategoria" name="filtroCategoria" (change)="filtrarPorCategoria()">
+            <option [value]="0">Todas</option>
+            <option *ngFor="let categoria of categorias" [value]="categoria.idCategoria">
+              {{ categoria.nombre }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Precio min.
+          <input type="number" [(ngModel)]="precioMinimo" name="precioMinimo" />
+        </label>
+
+        <label>
+          Precio max.
+          <input type="number" [(ngModel)]="precioMaximo" name="precioMaximo" />
+        </label>
+
+        <button type="button" class="secondary" (click)="filtrarPorPrecio()">Filtrar precio</button>
+
+        <label>
+          Estado
+          <select [(ngModel)]="estadoVista" name="estadoVista" (change)="aplicarVista()">
+            <option value="todo">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </select>
+        </label>
+
+        <button type="button" class="ghost" (click)="limpiarFiltros()">Recargar</button>
+      </div>
+
+      <div class="panel table-panel">
+        <div class="panel-title">
+          <div>
+            <h2>Productos consultados por SOAP</h2>
+            <span>Relacionados con su categoria</span>
+          </div>
+          <span *ngIf="cargando">Cargando...</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Categoria</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let producto of productosVista">
+                <td>{{ producto.idProducto }}</td>
+                <td>
+                  <strong>{{ producto.nombre }}</strong>
+                  <small>{{ producto.descripcion || 'Sin descripcion' }}</small>
+                </td>
+                <td>{{ nombreCategoria(producto.idCategoria) }}</td>
+                <td>{{ producto.precio | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>{{ producto.stock }}</td>
+                <td>
+                  <span class="badge" [class.off]="!producto.estado">
+                    {{ producto.estado ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button type="button" class="ghost" (click)="editar(producto)">Editar</button>
+                  <button type="button" class="danger" (click)="eliminar(producto)">Eliminar</button>
+                </td>
+              </tr>
+
+              <tr *ngIf="!cargando && productosVista.length === 0">
+                <td colspan="7" class="empty">No hay productos para mostrar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="category-row">
+        <article class="category" *ngFor="let categoria of categorias">
+          <strong>{{ categoria.nombre }}</strong>
+          <span>{{ categoria.descripcion }}</span>
+        </article>
+      </div>
+
+      <div class="panel table-panel">
+        <div class="panel-title">
+          <div>
+            <h2>Movimientos consultados por REST</h2>
+            <span>GET /api/movimientos</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Fecha</th>
+                <th>Observacion</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let movimiento of movimientos">
+                <td>{{ movimiento.idMovimiento }}</td>
+                <td>{{ movimiento.producto }}</td>
+                <td>
+                  <span class="badge" [class.off]="movimiento.tipoMovimiento === 'Salida'">
+                    {{ movimiento.tipoMovimiento }}
+                  </span>
+                </td>
+                <td>{{ movimiento.cantidad }}</td>
+                <td>{{ movimiento.fechaMovimiento | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ movimiento.observacion || 'Sin observacion' }}</td>
+                <td class="actions">
+                  <button type="button" class="ghost" (click)="editarMovimiento(movimiento)">Editar</button>
+                  <button type="button" class="danger" (click)="eliminarMovimiento(movimiento)">Eliminar</button>
+                </td>
+              </tr>
+
+              <tr *ngIf="movimientos.length === 0">
+                <td colspan="7" class="empty">No hay movimientos registrados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel external-panel">
+        <div class="panel-title">
+          <div>
+            <h2>Catalogo publico de productos</h2>
+            <span>API externa: dummyjson.com</span>
+          </div>
+          <div class="external-search">
+            <input type="search" [(ngModel)]="busquedaExterna" name="busquedaExterna" placeholder="Buscar referencia" />
+            <button type="button" class="secondary" (click)="buscarEnCatalogoExterno()">
+              {{ cargandoApi ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="notice error" *ngIf="errorApi">{{ errorApi }}</div>
+
+        <div class="external-grid">
+          <article class="external-card" *ngFor="let producto of productosExternos">
+            <img [src]="producto.thumbnail" [alt]="producto.title" />
+            <div>
+              <strong>{{ producto.title }}</strong>
+              <span>{{ producto.category }} · {{ producto.price | currency:'USD':'symbol':'1.2-2' }}</span>
+              <small>{{ producto.brand || 'Referencia externa' }}</small>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
