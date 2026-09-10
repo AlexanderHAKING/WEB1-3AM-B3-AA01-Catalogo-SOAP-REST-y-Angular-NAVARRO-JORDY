@@ -7,6 +7,7 @@ import { Categoria, MovimientoFormulario, MovimientoInventario, Producto, Produc
 import { MovimientoRestService } from './movimiento-rest.service';
 
 type EstadoVista = 'todo' | 'activos' | 'inactivos';
+type Vista = 'soap' | 'rest' | 'api';
 
 @Component({
   imports: [CommonModule, FormsModule],
@@ -29,6 +30,7 @@ export class App implements OnInit {
   editandoMovimiento = false;
   idMovimientoEditando = 0;
   estadoVista: EstadoVista = 'todo';
+  vista: Vista = 'soap';
 
   filtroCategoria = 0;
   precioMinimo: number | null = null;
@@ -37,6 +39,10 @@ export class App implements OnInit {
   formulario: Producto = this.productoVacio();
   movimientoForm: MovimientoFormulario = this.movimientoVacio();
   busquedaExterna = 'phone';
+  categoriaExterna = 'smartphones';
+  categoriasExternas = ['smartphones', 'laptops', 'beauty', 'groceries', 'home-decoration', 'furniture'];
+  productoLocalComparar = 0;
+  productoExternoComparar = 0;
   cargandoApi = false;
   errorApi = '';
 
@@ -282,6 +288,26 @@ export class App implements OnInit {
         this.actualizarPantalla();
       },
     });
+  }
+
+  buscarCategoriaExterna(): void {
+    this.busquedaExterna = this.categoriaExterna;
+    this.buscarEnCatalogoExterno();
+  }
+
+  cambiarVista(vista: Vista): void {
+    this.vista = vista;
+    this.mensaje = '';
+    this.error = '';
+    this.errorApi = '';
+  }
+
+  productoComparadoLocal(): Producto | undefined {
+    return this.productos.find((producto) => producto.idProducto === Number(this.productoLocalComparar));
+  }
+
+  productoComparadoExterno(): ProductoExterno | undefined {
+    return this.productosExternos.find((producto) => producto.id === Number(this.productoExternoComparar));
   }
 
   nombreCategoria(idCategoria: number): string {

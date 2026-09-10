@@ -16,11 +16,16 @@ Tema asignado:
 
 ```text
 soap 2/
-├── CatalogoSuap/                 Servicio SOAP y REST en ASP.NET Core
-├── CatalogoAngular/              Frontend Angular
+├── FrontendAngular/
+│   └── ProductosSOAPA-app/       Aplicacion Angular en dashboard vertical
+├── ServicioSOAP/
+│   └── ProductosSOAP/            Servicio SOAP de categorias y productos
+├── ServicioREST/
+│   └── MovimientosRESTA/         Explicacion y separacion del REST
 ├── SQL/                          Script de base de datos
 ├── Postman/                      Colecciones para probar SOAP y REST
 ├── Docs/                         Guia de apoyo del servicio SOAP
+├── .gitignore
 └── README.md
 ```
 
@@ -50,7 +55,7 @@ Desde la carpeta del proyecto:
 
 ```powershell
 cd "C:\Users\USUARIO\source\repos\soap 2"
-dotnet run --project CatalogoSuap\CatalogoSuap.csproj
+dotnet run --project ServicioSOAP\ProductosSOAP\CatalogoSuap.csproj
 ```
 
 El servicio queda en:
@@ -128,7 +133,7 @@ Postman\CatalogoREST-Movimientos.postman_collection.json
 Entrar a la carpeta Angular:
 
 ```powershell
-cd "C:\Users\USUARIO\source\repos\soap 2\CatalogoAngular"
+cd "C:\Users\USUARIO\source\repos\soap 2\FrontendAngular\ProductosSOAPA-app"
 pnpm install
 pnpm exec ng serve --host localhost --port 4200
 ```
@@ -141,10 +146,10 @@ http://localhost:4200
 
 La pantalla permite:
 
-- Consultar y administrar productos desde SOAP.
-- Registrar movimientos de inventario desde REST.
-- Ver como el stock cambia segun entradas o salidas.
-- Consultar productos de una API externa.
+- Entrar a la seccion SOAP para consultar y administrar productos.
+- Entrar a la seccion REST para registrar movimientos de inventario.
+- Entrar a la seccion de API externa para buscar productos publicos.
+- Comparar un producto local con uno consultado desde la API externa.
 
 ## API externa
 
@@ -156,10 +161,20 @@ https://dummyjson.com/products/search?q=phone
 
 Angular consume esta API directamente desde la pantalla "Catalogo publico de productos". Se muestran productos reales de referencia con nombre, categoria, precio e imagen. Esta consulta no reemplaza al SOAP ni al REST, solo sirve como informacion externa para comparar el catalogo local.
 
+## Separacion en Angular
+
+La aplicacion se organizo en formato dashboard vertical para que se entienda mejor durante la revision:
+
+- `Productos SOAP`: muestra productos y categorias consumidos desde el servicio SOAP.
+- `Movimientos REST`: muestra la tabla `Movimiento_Inventario` y permite usar los metodos basicos del REST.
+- `Catalogo externo`: consume la API publica y permite comparar un producto local con un producto externo.
+
+REST significa que el servicio trabaja con recursos usando metodos HTTP. En este proyecto el recurso es `Movimiento_Inventario`, por eso se usan rutas como `/api/movimientos` junto con `GET`, `POST`, `PUT` y `DELETE`.
+
 ## Orden recomendado para probar
 
 1. Ejecutar el script SQL.
-2. Ejecutar `CatalogoSuap`.
+2. Ejecutar `ServicioSOAP\ProductosSOAP`.
 3. Abrir el WSDL para confirmar que SOAP responde.
 4. Ejecutar Angular.
 5. Probar listado y registro de productos.

@@ -1,0 +1,244 @@
+<main class="dashboard">
+  <aside class="sidebar">
+    <div class="brand">
+      <span>PF</span>
+      <div>
+        <strong>ProductFlow</strong>
+        <small>SOAP + REST + API externa</small>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <button type="button" [class.active]="vista === 'soap'" (click)="cambiarVista('soap')">Productos SOAP</button>
+      <button type="button" [class.active]="vista === 'rest'" (click)="cambiarVista('rest')">Movimientos REST</button>
+      <button type="button" [class.active]="vista === 'api'" (click)="cambiarVista('api')">Catalogo externo</button>
+    </nav>
+
+    <div class="sidebar-note">
+      <span>Tercero A Matutina</span>
+      <strong>Catalogo e inventario</strong>
+    </div>
+  </aside>
+
+  <section class="content">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Actividad Autonoma</p>
+        <h1>Catalogo de productos</h1>
+        <p class="subtitle">Integracion de SOAP, REST y API publica desde Angular.</p>
+      </div>
+      <div class="service-box">
+        <span>Backend</span>
+        <strong>localhost:5232</strong>
+        <small>Angular: localhost:4200</small>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article><span>Productos</span><strong>{{ productos.length }}</strong></article>
+      <article><span>Activos</span><strong>{{ totalActivos }}</strong></article>
+      <article><span>Categorias</span><strong>{{ categorias.length }}</strong></article>
+      <article><span>Stock total</span><strong>{{ inventarioTotal }}</strong></article>
+      <article><span>Movimientos</span><strong>{{ movimientos.length }}</strong></article>
+    </section>
+
+    <section *ngIf="vista === 'soap'" class="page">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">Servicio SOAP</p>
+          <h2>Productos y categorias</h2>
+          <span>Esta seccion consume el servicio SOAP para consultar y administrar productos.</span>
+        </div>
+      </div>
+
+      <section class="two-columns">
+        <article class="panel">
+          <div class="panel-title">
+            <div>
+              <h3>{{ editando ? 'Editar producto' : 'Nuevo producto' }}</h3>
+              <span>Datos enviados al servicio SOAP</span>
+            </div>
+            <button type="button" class="ghost" (click)="nuevoProducto()">Limpiar</button>
+          </div>
+
+          <form (ngSubmit)="guardar()" #productoForm="ngForm">
+            <label>Nombre<input type="text" name="nombre" [(ngModel)]="formulario.nombre" required /></label>
+            <label>Descripcion<textarea name="descripcion" rows="3" [(ngModel)]="formulario.descripcion"></textarea></label>
+            <div class="field-row">
+              <label>Precio<input type="number" name="precio" min="0" step="0.01" [(ngModel)]="formulario.precio" /></label>
+              <label>Stock<input type="number" name="stock" min="0" step="1" [(ngModel)]="formulario.stock" /></label>
+            </div>
+            <label>
+              Categoria
+              <select name="idCategoria" [(ngModel)]="formulario.idCategoria">
+                <option *ngFor="let categoria of categorias" [value]="categoria.idCategoria">{{ categoria.nombre }}</option>
+              </select>
+            </label>
+            <label class="check-row"><input type="checkbox" name="estado" [(ngModel)]="formulario.estado" />Producto activo</label>
+            <button type="submit" class="primary" [disabled]="guardando">
+              {{ guardando ? 'Guardando...' : (editando ? 'Guardar cambios' : 'Agregar producto') }}
+            </button>
+          </form>
+
+          <div class="notice success" *ngIf="mensaje">{{ mensaje }}</div>
+          <div class="notice error" *ngIf="error">{{ error }}</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <div>
+              <h3>Categorias</h3>
+              <span>Relacion principal del catalogo</span>
+            </div>
+          </div>
+          <div class="category-list">
+            <div class="category" *ngFor="let categoria of categorias">
+              <strong>{{ categoria.nombre }}</strong>
+              <span>{{ categoria.descripcion }}</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel filters">
+        <label>
+          Categoria
+          <select [(ngModel)]="filtroCategoria" name="filtroCategoria" (change)="filtrarPorCategoria()">
+            <option [value]="0">Todas</option>
+            <option *ngFor="let categoria of categorias" [value]="categoria.idCategoria">{{ categoria.nombre }}</option>
+          </select>
+        </label>
+        <label>Precio min.<input type="number" [(ngModel)]="precioMinimo" name="precioMinimo" /></label>
+        <label>Precio max.<input type="number" [(ngModel)]="precioMaximo" name="precioMaximo" /></label>
+        <button type="button" class="secondary" (click)="filtrarPorPrecio()">Filtrar precio</button>
+        <label>
+          Estado
+          <select [(ngModel)]="estadoVista" name="estadoVista" (change)="aplicarVista()">
+            <option value="todo">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </select>
+        </label>
+        <button type="button" class="ghost" (click)="limpiarFiltros()">Recargar</button>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-title">
+          <div><h3>Productos consultados por SOAP</h3><span>Endpoint: /ProductoService.svc</span></div>
+          <span *ngIf="cargando">Cargando...</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Producto</th><th>Categoria</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let producto of productosVista">
+                <td>{{ producto.idProducto }}</td>
+                <td><strong>{{ producto.nombre }}</strong><small>{{ producto.descripcion || 'Sin descripcion' }}</small></td>
+                <td>{{ nombreCategoria(producto.idCategoria) }}</td>
+                <td>{{ producto.precio | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>{{ producto.stock }}</td>
+                <td><span class="badge" [class.off]="!producto.estado">{{ producto.estado ? 'Activo' : 'Inactivo' }}</span></td>
+                <td class="actions"><button type="button" class="ghost" (click)="editar(producto)">Editar</button><button type="button" class="danger" (click)="eliminar(producto)">Eliminar</button></td>
+              </tr>
+              <tr *ngIf="!cargando && productosVista.length === 0"><td colspan="7" class="empty">No hay productos para mostrar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section *ngIf="vista === 'rest'" class="page">
+      <div class="page-head split">
+        <div>
+          <p class="eyebrow">Servicio REST</p>
+          <h2>Movimientos de inventario</h2>
+          <span>REST trabaja con recursos mediante rutas y metodos HTTP como GET, POST, PUT y DELETE.</span>
+        </div>
+        <button type="button" class="primary" (click)="nuevoMovimiento()">Nuevo movimiento</button>
+      </div>
+
+      <section class="method-grid">
+        <article><strong>GET</strong><span>Obtiene la lista de movimientos.</span></article>
+        <article><strong>GET /id</strong><span>Consulta un movimiento especifico.</span></article>
+        <article><strong>POST</strong><span>Guarda un movimiento nuevo.</span></article>
+        <article><strong>PUT</strong><span>Actualiza un movimiento existente.</span></article>
+        <article><strong>DELETE</strong><span>Borra un movimiento registrado.</span></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><div><h3>{{ editandoMovimiento ? 'Editar movimiento' : 'Registrar movimiento' }}</h3><span>Tabla relacionada: Movimiento_Inventario</span></div></div>
+        <form class="wide-form" (ngSubmit)="guardarMovimiento()" #movimientoFormRef="ngForm">
+          <label>Producto<select name="movimientoProducto" [(ngModel)]="movimientoForm.idProducto"><option *ngFor="let producto of productos" [value]="producto.idProducto">{{ producto.nombre }}</option></select></label>
+          <label>Tipo de movimiento<select name="movimientoTipo" [(ngModel)]="movimientoForm.tipoMovimiento"><option value="Entrada">Entrada</option><option value="Salida">Salida</option></select></label>
+          <label>Cantidad<input type="number" name="movimientoCantidad" min="1" step="1" [(ngModel)]="movimientoForm.cantidad" /></label>
+          <label class="full-field">Observacion<textarea name="movimientoObservacion" rows="3" [(ngModel)]="movimientoForm.observacion"></textarea></label>
+          <div class="form-actions full-field"><button type="button" class="ghost" (click)="nuevoMovimiento()">Cancelar</button><button type="submit" class="primary">{{ editandoMovimiento ? 'Actualizar movimiento' : 'Registrar movimiento' }}</button></div>
+        </form>
+        <div class="notice success" *ngIf="mensaje">{{ mensaje }}</div>
+        <div class="notice error" *ngIf="error">{{ error }}</div>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-title"><div><h3>Movimientos consultados por REST</h3><span>GET /api/movimientos</span></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Fecha</th><th>Observacion</th><th>Acciones</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let movimiento of movimientos">
+                <td>{{ movimiento.idMovimiento }}</td><td>{{ movimiento.producto }}</td>
+                <td><span class="badge" [class.off]="movimiento.tipoMovimiento === 'Salida'">{{ movimiento.tipoMovimiento }}</span></td>
+                <td>{{ movimiento.cantidad }}</td><td>{{ movimiento.fechaMovimiento | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ movimiento.observacion || 'Sin observacion' }}</td>
+                <td class="actions"><button type="button" class="ghost" (click)="editarMovimiento(movimiento)">Editar</button><button type="button" class="danger" (click)="eliminarMovimiento(movimiento)">Eliminar</button></td>
+              </tr>
+              <tr *ngIf="movimientos.length === 0"><td colspan="7" class="empty">No hay movimientos registrados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section *ngIf="vista === 'api'" class="page">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">Catalogo externo</p>
+          <h2>API publica de productos</h2>
+          <span>Consulta productos reales y comparalos con el inventario local obtenido por SOAP.</span>
+        </div>
+      </div>
+
+      <section class="panel external-panel">
+        <div class="panel-title"><div><h3>Buscar productos externos</h3><span>API externa: dummyjson.com</span></div></div>
+        <div class="external-search">
+          <input type="search" [(ngModel)]="busquedaExterna" name="busquedaExterna" placeholder="Ej. phone, laptop, watch" />
+          <button type="button" class="secondary" (click)="buscarEnCatalogoExterno()">{{ cargandoApi ? 'Buscando...' : 'Buscar' }}</button>
+          <select [(ngModel)]="categoriaExterna" name="categoriaExterna"><option *ngFor="let categoria of categoriasExternas" [value]="categoria">{{ categoria }}</option></select>
+          <button type="button" class="ghost" (click)="buscarCategoriaExterna()">Buscar por categoria</button>
+        </div>
+        <div class="notice error" *ngIf="errorApi">{{ errorApi }}</div>
+      </section>
+
+      <section class="panel compare-panel">
+        <div class="panel-title"><div><h3>Comparar inventario local con catalogo externo</h3><span>Producto local desde SOAP y producto externo desde API publica</span></div></div>
+        <div class="compare-selects">
+          <label>Producto local<select [(ngModel)]="productoLocalComparar" name="productoLocalComparar"><option [value]="0">Selecciona un producto local</option><option *ngFor="let producto of productos" [value]="producto.idProducto">{{ producto.nombre }}</option></select></label>
+          <label>Producto externo<select [(ngModel)]="productoExternoComparar" name="productoExternoComparar"><option [value]="0">Selecciona un producto externo</option><option *ngFor="let producto of productosExternos" [value]="producto.id">{{ producto.title }}</option></select></label>
+        </div>
+        <div class="comparison" *ngIf="productoComparadoLocal() && productoComparadoExterno(); else sinComparacion">
+          <article><span>Producto local</span><strong>{{ productoComparadoLocal()?.nombre }}</strong><small>{{ nombreCategoria(productoComparadoLocal()?.idCategoria || 0) }} - Stock {{ productoComparadoLocal()?.stock }}</small><b>{{ productoComparadoLocal()?.precio | currency:'USD':'symbol':'1.2-2' }}</b></article>
+          <article><span>Producto externo</span><strong>{{ productoComparadoExterno()?.title }}</strong><small>{{ productoComparadoExterno()?.category }}</small><b>{{ productoComparadoExterno()?.price | currency:'USD':'symbol':'1.2-2' }}</b></article>
+        </div>
+        <ng-template #sinComparacion><div class="empty compare-empty">Selecciona ambos productos para compararlos.</div></ng-template>
+      </section>
+
+      <section>
+        <div class="panel-title"><div><p class="eyebrow">Resultados API</p><h3>Productos externos</h3></div><span>{{ productosExternos.length }} productos</span></div>
+        <div class="external-grid">
+          <article class="external-card" *ngFor="let producto of productosExternos">
+            <img [src]="producto.thumbnail" [alt]="producto.title" />
+            <div><strong>{{ producto.title }}</strong><span>{{ producto.category }} - {{ producto.price | currency:'USD':'symbol':'1.2-2' }}</span><small>{{ producto.brand || 'Referencia externa' }}</small></div>
+          </article>
+        </div>
+      </section>
+    </section>
+  </section>
+</main>

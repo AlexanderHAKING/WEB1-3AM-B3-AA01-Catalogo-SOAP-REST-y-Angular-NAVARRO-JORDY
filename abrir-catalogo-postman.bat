@@ -2,7 +2,7 @@
 cd /d "C:\Users\USUARIO\source\repos\soap 2"
 
 echo Iniciando servicio CatalogoSuap en http://localhost:5232 ...
-start "CatalogoSuap SOAP" dotnet run --project CatalogoSuap\CatalogoSuap.csproj --no-build
+start "CatalogoSuap SOAP REST" dotnet run --project ServicioSOAP\ProductosSOAP\CatalogoSuap.csproj --no-build
 
 echo Esperando unos segundos para que el servicio levante...
 timeout /t 5 /nobreak > nul

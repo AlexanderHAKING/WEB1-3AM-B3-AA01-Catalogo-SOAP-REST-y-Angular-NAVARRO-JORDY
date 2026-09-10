@@ -1,5 +1,5 @@
 @echo off
-cd /d C:\Users\USUARIO\source\repos\ClientesSuap\CatalogoAngular
+cd /d "C:\Users\USUARIO\source\repos\soap 2\FrontendAngular\ProductosSOAPA-app"
 
 set PATH=C:\Users\USUARIO\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;%PATH%
 
